@@ -1,0 +1,239 @@
+<!DOCTYPE html><html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>সদস্য তথ্য ফর্ম</title><style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 520px;
+    background: #fff;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo h1 {
+    color: #222;
+    margin-bottom: 10px;
+}
+
+.logo p {
+    color: #666;
+    font-size: 14px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+input:focus,
+select:focus {
+    border-color: #25D366;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #1daa52;
+}
+
+.note {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.success {
+    color: green;
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+}
+</style></head>
+<body><div class="container"><div class="logo">
+    <h1>সদস্য তথ্য ফর্ম</h1>
+    <p>গ্রুপে যুক্ত হওয়ার পূর্বে নিচের তথ্য পূরণ করুন</p>
+</div>
+
+<form id="memberForm">
+
+    <div class="form-group">
+        <label>নাম</label>
+        <input type="text" id="name" placeholder="আপনার নাম লিখুন" required>
+    </div>
+
+    <div class="form-group">
+        <label>সর্বশেষ সাংগঠনিক মান</label>
+        <select id="rank" required>
+            <option value="">একটি নির্বাচন করুন</option>
+            <option value="সদস্য/রোকন">১. সদস্য/রোকন</option>
+            <option value="সাথী">২. সাথী</option>
+            <option value="কর্মী">৩. কর্মী</option>
+            <option value="কিছুই না">৪. কিছুই না</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>মোবাইল নাম্বার</label>
+        <input type="text" id="phone" placeholder="01XXXXXXXXX" required>
+    </div>
+
+    <button type="submit">সাবমিট করুন</button>
+
+    <div class="error" id="errorMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+</form>
+
+<div class="note">
+    তথ্য যাচাইয়ের পর আপনাকে WhatsApp গ্রুপে প্রবেশ করানো হবে
+</div>
+
+</div><script>
+
+// WhatsApp Group Link (Base64 Encoded)
+const whatsappGroup = atob("aHR0cHM6Ly9jaGF0LndoYXRzYXBwLmNvbS9Dc09YcVFMeVRpSTNZVGhFSXZFY1d3");
+
+// GitHub তথ্য
+const GITHUB_USERNAME = "YOUR_GITHUB_USERNAME";
+const GITHUB_REPO = "YOUR_REPOSITORY_NAME";
+const GITHUB_FILE_PATH = "man.txt";
+const GITHUB_TOKEN = "YOUR_GITHUB_TOKEN";
+
+const form = document.getElementById("memberForm");
+const errorMsg = document.getElementById("errorMsg");
+const successMsg = document.getElementById("successMsg");
+
+form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    errorMsg.innerText = "";
+    successMsg.innerText = "";
+
+    const name = document.getElementById("name").value.trim();
+    const rank = document.getElementById("rank").value;
+    const phone = document.getElementById("phone").value.trim();
+
+    // শুধুমাত্র ইংরেজি ডিজিট
+    const englishNumberRegex = /^[0-9]+$/;
+
+    if (!englishNumberRegex.test(phone)) {
+        errorMsg.innerText = "মোবাইল নাম্বার অবশ্যই ইংরেজি ডিজিটে লিখতে হবে";
+        return;
+    }
+
+    // ৪ নম্বর হলে ব্লক
+    if (rank === "কিছুই না") {
+        errorMsg.innerText = "দুঃখিত! আপনি এই গ্রুপে যুক্ত হতে পারবেন না";
+        return;
+    }
+
+    const currentDate = new Date().toLocaleString("en-BD");
+
+    const newEntry = `\n--------------------------------\nনাম: ${name}\nসাংগঠনিক মান: ${rank}\nমোবাইল: ${phone}\nসময়: ${currentDate}\n--------------------------------\n`;
+
+    try {
+
+        // বর্তমান ফাইল রিড
+        const getFile = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                Accept: "application/vnd.github.v3+json"
+            }
+        });
+
+        const fileData = await getFile.json();
+
+        const existingContent = atob(fileData.content);
+
+        const updatedContent = existingContent + newEntry;
+
+        const updateResponse = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: "New member data added",
+                content: btoa(unescape(encodeURIComponent(updatedContent))),
+                sha: fileData.sha
+            })
+        });
+
+        if (updateResponse.ok) {
+
+            successMsg.innerText = "তথ্য সফলভাবে জমা হয়েছে";
+
+            window.location.href = whatsappGroup;
+
+        } else {
+            errorMsg.innerText = "ডাটা সংরক্ষণ করা যায়নি";
+        }
+
+    } catch (error) {
+        console.error(error);
+        errorMsg.innerText = "সার্ভার সমস্যা হয়েছে";
+    }
+
+});
+
+</script></body>
+</html>
